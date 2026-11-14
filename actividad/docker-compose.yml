@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: taller-db
+    environment:
+      MYSQL_ROOT_PASSWORD: SecurePass123
+      MYSQL_DATABASE: taller_epis
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: AppPass456
+      TZ: America/Bogota
+    volumes:
+      - datos-mysql:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - red-interna
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uapp_user", "-pAppPass456"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  web:
+    build: ./web
+    container_name: taller-web
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_USER: app_user
+      DB_PASS: AppPass456
+      DB_NAME: taller_epis
+      STUDENT_NAME: "Camilo Rodríguez"
+      TZ: America/Bogota
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - red-interna
+
+volumes:
+  datos-mysql:
+
+networks:
+  red-interna:
